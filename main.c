@@ -73,8 +73,9 @@
 #define CONNECTED_LED                   BSP_BOARD_LED_0                        /**< Is on when device has connected. */
 #define LEDBUTTON_LED                   BSP_BOARD_LED_0                         /**< LED to be toggled with the help of the LED Button Service. */
 #define LEDBUTTON_BUTTON                BSP_BUTTON_0                            /**< Button that will trigger the notification event with the LED Button Service */
+#define A_BUTTON                        
 
-#define DEVICE_NAME                     "Sparkfun nRF"                         /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "Nordic_Blinky"                         /**< Name of device. Will be included in the advertising data. */
 
 #define APP_BLE_OBSERVER_PRIO           3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1                                       /**< A tag identifying the SoftDevice BLE configuration. */
@@ -502,6 +503,8 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
                 APP_ERROR_CHECK(err_code);
             }
             break;
+
+        case 
 
         default:
             APP_ERROR_HANDLER(pin_no);
