@@ -73,7 +73,13 @@
 #define CONNECTED_LED                   BSP_BOARD_LED_0                        /**< Is on when device has connected. */
 #define LEDBUTTON_LED                   BSP_BOARD_LED_0                         /**< LED to be toggled with the help of the LED Button Service. */
 #define LEDBUTTON_BUTTON                BSP_BUTTON_0                            /**< Button that will trigger the notification event with the LED Button Service */
-#define A_BUTTON                        
+#define A_BUTTON                        10
+#define PAUSE_BUTTON                    9
+#define Y_BUTTON                        23
+#define B_BUTTON                        22
+#define X_BUTTON                        21
+#define LEFT_TRIGGER                    19
+#define RIGHT_TRIGGER                   20        
 
 #define DEVICE_NAME                     "Nordic_Blinky"                         /**< Name of device. Will be included in the advertising data. */
 
@@ -522,7 +528,14 @@ static void buttons_init(void)
     //The array must be static because a pointer to it will be saved in the button handler module.
     static app_button_cfg_t buttons[] =
     {
-        {LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler}
+        {LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler},
+        {A_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {B_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {X_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {Y_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {PAUSE_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {LEFT_TRIGGER, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {RIGHT_TRIGGER, true, NRF_GPIO_PIN_NOPULL, button_event_handler}
     };
 
     err_code = app_button_init(buttons, ARRAY_SIZE(buttons),
@@ -562,6 +575,17 @@ static void idle_state_handle(void)
     }
 }
 
+static void gpio_init(void)
+{
+    nrf_gpio_cfg_input(A_BUTTON, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(B_BUTTON, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(X_BUTTON, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(Y_BUTTON, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(PAUSE_BUTTON, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(LEFT_TRIGGER, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(RIGHT_TRIGGER, NRF_GPIO_PIN_NOPULL);
+}
+
 
 /**@brief Function for application main entry.
  */
@@ -579,6 +603,7 @@ int main(void)
     services_init();
     advertising_init();
     conn_params_init();
+    //gpio_init();
 
     // Start execution.
     NRF_LOG_INFO("Blinky example started.");
