@@ -114,6 +114,10 @@ _build/nrf52840_xxaa/main.c.o: ../../../main.c \
  ../../../../../../components/ble/nrf_ble_gatt/nrf_ble_gatt.h \
  ../../../../../../components/ble/nrf_ble_qwr/nrf_ble_qwr.h \
  ../../../../../../components/libraries/pwr_mgmt/nrf_pwr_mgmt.h \
+ ../../../../../../integration/nrfx/legacy/nrf_drv_gpiote.h \
+ ../../../../../../modules/nrfx/drivers/include/nrfx_gpiote.h \
+ ../../../../../../modules/nrfx/hal/nrf_gpiote.h \
+ ../../../../../../modules/nrfx/hal/nrf_gpio.h \
  ../../../../../../components/libraries/log/nrf_log.h \
  ../../../../../../components/libraries/strerror/nrf_strerror.h \
  ../../../../../../components/libraries/log/src/nrf_log_internal.h \
@@ -356,6 +360,14 @@ c:\program\ files\ (x86)\gnu\ tools\ arm\ embedded\9\ 2019-q4-major\lib\gcc\arm-
 ../../../../../../components/ble/nrf_ble_qwr/nrf_ble_qwr.h:
 
 ../../../../../../components/libraries/pwr_mgmt/nrf_pwr_mgmt.h:
+
+../../../../../../integration/nrfx/legacy/nrf_drv_gpiote.h:
+
+../../../../../../modules/nrfx/drivers/include/nrfx_gpiote.h:
+
+../../../../../../modules/nrfx/hal/nrf_gpiote.h:
+
+../../../../../../modules/nrfx/hal/nrf_gpio.h:
 
 ../../../../../../components/libraries/log/nrf_log.h:
 

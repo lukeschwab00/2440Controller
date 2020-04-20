@@ -63,6 +63,7 @@
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 #include "nrf_pwr_mgmt.h"
+#include "nrf_drv_gpiote.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -81,7 +82,7 @@
 #define LEFT_TRIGGER                    19
 #define RIGHT_TRIGGER                   20        
 
-#define DEVICE_NAME                     "Nordic_Blinky"                         /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "Controller"                         /**< Name of device. Will be included in the advertising data. */
 
 #define APP_BLE_OBSERVER_PRIO           3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1                                       /**< A tag identifying the SoftDevice BLE configuration. */
@@ -498,8 +499,41 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 
     switch (pin_no)
     {
-        case LEDBUTTON_BUTTON:
+        /*case LEDBUTTON_BUTTON:
             NRF_LOG_INFO("Send button state change.");
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            if (err_code != NRF_SUCCESS &&
+                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+                err_code != NRF_ERROR_INVALID_STATE &&
+                err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+            break;*/
+
+        case A_BUTTON:
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            if (err_code != NRF_SUCCESS &&
+                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+                err_code != NRF_ERROR_INVALID_STATE &&
+                err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+            break;
+        
+        case B_BUTTON:
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            if (err_code != NRF_SUCCESS &&
+                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+                err_code != NRF_ERROR_INVALID_STATE &&
+                err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+            break;
+        
+        case X_BUTTON:
             err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
             if (err_code != NRF_SUCCESS &&
                 err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
@@ -510,8 +544,41 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             }
             break;
 
-        case A_BUTTON
-        err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+        case Y_BUTTON:
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            if (err_code != NRF_SUCCESS &&
+                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+                err_code != NRF_ERROR_INVALID_STATE &&
+                err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+            break;
+
+        case PAUSE_BUTTON:
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            if (err_code != NRF_SUCCESS &&
+                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+                err_code != NRF_ERROR_INVALID_STATE &&
+                err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+            break;
+        
+        case RIGHT_TRIGGER:
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            if (err_code != NRF_SUCCESS &&
+                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+                err_code != NRF_ERROR_INVALID_STATE &&
+                err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+            break;
+        
+        case LEFT_TRIGGER:
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
             if (err_code != NRF_SUCCESS &&
                 err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
                 err_code != NRF_ERROR_INVALID_STATE &&
@@ -537,7 +604,7 @@ static void buttons_init(void)
     //The array must be static because a pointer to it will be saved in the button handler module.
     static app_button_cfg_t buttons[] =
     {
-        {LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler},
+        //{LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler},
         {A_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
         {B_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
         {X_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
@@ -547,9 +614,20 @@ static void buttons_init(void)
         {RIGHT_TRIGGER, true, NRF_GPIO_PIN_NOPULL, button_event_handler}
     };
 
-    err_code = app_button_init(buttons, ARRAY_SIZE(buttons),
-                               BUTTON_DETECTION_DELAY);
+    /*static app_button_cfg_t buttons2[] =
+    {
+        {PAUSE_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {LEFT_TRIGGER, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
+        {RIGHT_TRIGGER, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
+    };*/
+
+    err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
+    char const *error = nrf_strerror_get(err_code);
+    printf("%s\n", error);
     APP_ERROR_CHECK(err_code);
+
+    //err_code = app_button_init(buttons2, 3, BUTTON_DETECTION_DELAY);
+    //APP_ERROR_CHECK(err_code);
 }
 
 
@@ -584,11 +662,22 @@ static void idle_state_handle(void)
     }
 }
 
+/*void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    switch(pin)
+    {
+        case A_BUTTON:
+            nrf_drv_gpiote_out_toggle(7);
+            break;
+    }
+}*/
+
 /**
  * setup button pins as GPIO inputs
  * 
  */
-static void gpio_init(void)
+
+/*static void gpio_init(void)
 {
     nrf_gpio_cfg_input(A_BUTTON, NRF_GPIO_PIN_NOPULL);
     nrf_gpio_cfg_input(B_BUTTON, NRF_GPIO_PIN_NOPULL);
@@ -597,7 +686,23 @@ static void gpio_init(void)
     nrf_gpio_cfg_input(PAUSE_BUTTON, NRF_GPIO_PIN_NOPULL);
     nrf_gpio_cfg_input(LEFT_TRIGGER, NRF_GPIO_PIN_NOPULL);
     nrf_gpio_cfg_input(RIGHT_TRIGGER, NRF_GPIO_PIN_NOPULL);
-}
+
+    ret_code_t err_code;
+
+    err_code = nrf_drv_gpiote_init();
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
+
+    err_code = nrf_drv_gpiote_out_init(7, &out_config);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_LOTOHI(false);
+    in_config.pull = NRF_GPIO_PIN_NOPULL;
+
+    err_code = nrf_drv_gpiote_in_init(A_BUTTON, &in_config, in_pin_handler);
+    APP_ERROR_CHECK(err_code);
+}*/
 
 
 /**@brief Function for application main entry.
@@ -608,7 +713,8 @@ int main(void)
     log_init();
     leds_init();
     timers_init();
-    buttons_init();
+    //gpio_init();
+    buttons_init(); // initializes GPIO pins as buttons using the button library. Makes using the button interrupts easier
     power_management_init();
     ble_stack_init();
     gap_params_init();
@@ -616,7 +722,7 @@ int main(void)
     services_init();
     advertising_init();
     conn_params_init();
-    gpio_init();
+    
 
     // Start execution.
     NRF_LOG_INFO("Blinky example started.");
