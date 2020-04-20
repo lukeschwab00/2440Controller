@@ -510,7 +510,16 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             }
             break;
 
-        case 
+        case A_BUTTON
+        err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            if (err_code != NRF_SUCCESS &&
+                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+                err_code != NRF_ERROR_INVALID_STATE &&
+                err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+            break;
 
         default:
             APP_ERROR_HANDLER(pin_no);
@@ -575,6 +584,10 @@ static void idle_state_handle(void)
     }
 }
 
+/**
+ * setup button pins as GPIO inputs
+ * 
+ */
 static void gpio_init(void)
 {
     nrf_gpio_cfg_input(A_BUTTON, NRF_GPIO_PIN_NOPULL);
@@ -603,7 +616,7 @@ int main(void)
     services_init();
     advertising_init();
     conn_params_init();
-    //gpio_init();
+    gpio_init();
 
     // Start execution.
     NRF_LOG_INFO("Blinky example started.");
