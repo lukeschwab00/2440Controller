@@ -1,47 +1,4 @@
-/**
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form, except as embedded into a Nordic
- *    Semiconductor ASA integrated circuit in a product or a software update for
- *    such product, must reproduce the above copyright notice, this list of
- *    conditions and the following disclaimer in the documentation and/or other
- *    materials provided with the distribution.
- *
- * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
- *    contributors may be used to endorse or promote products derived from this
- *    software without specific prior written permission.
- *
- * 4. This software, with or without modification, must only be used with a
- *    Nordic Semiconductor ASA integrated circuit.
- *
- * 5. Any software provided in binary form under this license must not be reverse
- *    engineered, decompiled, modified and/or disassembled.
- *
- * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL NORDIC SEMICONDUCTOR ASA OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-/**
- * @brief Blinky Sample Application main file.
- *
- * This file contains the source code for a sample server application using the LED Button service.
- */
+// Bluetooth Retro Game Controller
 
 #include <stdint.h>
 #include <string.h>
@@ -64,10 +21,13 @@
 #include "nrf_ble_qwr.h"
 #include "nrf_pwr_mgmt.h"
 #include "nrf_drv_gpiote.h"
-
+#include "app_uart.h"
+//#include "ble_nus.h"
+#include "app_util_platform.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
+#include "nrf_uart.h"
 
 
 #define ADVERTISING_LED                 BSP_BOARD_LED_0                         /**< Is on when device is advertising. */
@@ -83,6 +43,7 @@
 #define RIGHT_TRIGGER                   20        
 
 #define DEVICE_NAME                     "Controller"                         /**< Name of device. Will be included in the advertising data. */
+#define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN
 
 #define APP_BLE_OBSERVER_PRIO           3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1                                       /**< A tag identifying the SoftDevice BLE configuration. */
@@ -104,7 +65,11 @@
 
 #define DEAD_BEEF                       0xDEADBEEF                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
+#define UART_TX_BUF_SIZE                12
+#define UART_RX_BUF_SIZE                12
+#define UART_HWFC APP_UART_FLOW_CONTROL_ENABLED
 
+//BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                               /**< BLE NUS service instance. */
 BLE_LBS_DEF(m_lbs);                                                             /**< LED Button Service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                         /**< Context for the Queued Write module.*/
@@ -488,11 +453,14 @@ static void ble_stack_init(void)
 }
 
 
-/**@brief Function for handling events from the button handler module.
+
+/**@brief Function for handling events from the button handler module. (leveraged instead of using own input interuppt handler below)
  *
  * @param[in] pin_no        The pin that the event applies to.
  * @param[in] button_action The button action (press/release).
  */
+// button IRQ essentially
+// UART TX writes came from Nayef's test case function
 static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 {
     ret_code_t err_code;
@@ -512,7 +480,7 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             break;*/
 
         case A_BUTTON:
-            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, 0x01);
             if (err_code != NRF_SUCCESS &&
                 err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
                 err_code != NRF_ERROR_INVALID_STATE &&
@@ -520,10 +488,19 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 APP_ERROR_CHECK(err_code);
             }
+
+            /*uint8_t *tx_data = (uint8_t *)("\r\n01000000000\r\n");
+
+            for (uint32_t i = 0; i < 11; i++)
+            {
+                while (app_uart_put(tx_data[i]) != NRF_SUCCESS);
+        
+            }*/
+
             break;
         
         case B_BUTTON:
-            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, 0x02);
             if (err_code != NRF_SUCCESS &&
                 err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
                 err_code != NRF_ERROR_INVALID_STATE &&
@@ -531,10 +508,17 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 APP_ERROR_CHECK(err_code);
             }
+
+            /*uint8_t *tx_data = (uint8_t *)("\r\n00100000000\r\n");
+
+            for (uint32_t i = 0; i < 11; i++)
+            {
+                while (app_uart_put(tx_data[i]) != NRF_SUCCESS);
+            }*/
             break;
         
         case X_BUTTON:
-            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, 0x03);
             if (err_code != NRF_SUCCESS &&
                 err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
                 err_code != NRF_ERROR_INVALID_STATE &&
@@ -542,10 +526,18 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 APP_ERROR_CHECK(err_code);
             }
+
+            /*uint8_t *tx_data = (uint8_t *)("\r\n000100000000\r\n");
+
+            for (uint32_t i = 0; i < 11; i++)
+            {
+                while (app_uart_put(tx_data[i]) != NRF_SUCCESS);
+        
+            }*/
             break;
 
         case Y_BUTTON:
-            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, 0x04);
             if (err_code != NRF_SUCCESS &&
                 err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
                 err_code != NRF_ERROR_INVALID_STATE &&
@@ -553,10 +545,18 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 APP_ERROR_CHECK(err_code);
             }
+
+            /*uint8_t *tx_data = (uint8_t *)("\r\n00001000000\r\n");
+
+            for (uint32_t i = 0; i < 11; i++)
+            {
+                while (app_uart_put(tx_data[i]) != NRF_SUCCESS);
+        
+            }*/
             break;
 
         case PAUSE_BUTTON:
-            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, 0x05);
             if (err_code != NRF_SUCCESS &&
                 err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
                 err_code != NRF_ERROR_INVALID_STATE &&
@@ -564,10 +564,20 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 APP_ERROR_CHECK(err_code);
             }
+
+            /*uint8_t *tx_data = (uint8_t *)("\r\n10000000000\r\n");
+
+            for (uint32_t i = 0; i < 11; i++)
+            {
+                while (app_uart_put(tx_data[i]) != NRF_SUCCESS);
+        
+            }*/
+
+            bsp_board_led_invert(LEDBUTTON_LED); // to make LED turn on and off during pause press
             break;
         
         case RIGHT_TRIGGER:
-            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, 0x06);
             if (err_code != NRF_SUCCESS &&
                 err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
                 err_code != NRF_ERROR_INVALID_STATE &&
@@ -575,10 +585,18 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 APP_ERROR_CHECK(err_code);
             }
+
+            /*uint8_t *tx_data = (uint8_t *)("\r\n00000100000\r\n");
+
+            for (uint32_t i = 0; i < 11; i++)
+            {
+                while (app_uart_put(tx_data[i]) != NRF_SUCCESS);
+        
+            }*/
             break;
         
         case LEFT_TRIGGER:
-            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, 0x07);
             if (err_code != NRF_SUCCESS &&
                 err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
                 err_code != NRF_ERROR_INVALID_STATE &&
@@ -586,6 +604,13 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 APP_ERROR_CHECK(err_code);
             }
+            /*uint8_t *tx_data = (uint8_t *)("\r\n00000010000\r\n");
+
+            for (uint32_t i = 0; i < 11; i++)
+            {
+                while (app_uart_put(tx_data[i]) != NRF_SUCCESS);
+        
+            }*/
             break;
 
         default:
@@ -595,13 +620,17 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 }
 
 
-/**@brief Function for initializing the button handler module.
+/**@brief Function for initializing the button handler module. (leveraged from example, configured to setup of our buttons i.e. no pullups)
  */
+// initially had error with sdk_config only being setup to 4 low power events #define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 7
+//                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 static void buttons_init(void)
 {
     ret_code_t err_code;
 
     //The array must be static because a pointer to it will be saved in the button handler module.
+    // using the button variable instead of GPIOTE allowed for easier implementation. button library already uses GPIOTE.
     static app_button_cfg_t buttons[] =
     {
         //{LEDBUTTON_BUTTON, false, BUTTON_PULL, button_event_handler},
@@ -612,7 +641,7 @@ static void buttons_init(void)
         {PAUSE_BUTTON, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
         {LEFT_TRIGGER, true, NRF_GPIO_PIN_NOPULL, button_event_handler},
         {RIGHT_TRIGGER, true, NRF_GPIO_PIN_NOPULL, button_event_handler}
-    };
+    }; // button array for 5 face buttons and side triggers
 
     /*static app_button_cfg_t buttons2[] =
     {
@@ -623,11 +652,23 @@ static void buttons_init(void)
 
     err_code = app_button_init(buttons, ARRAY_SIZE(buttons), BUTTON_DETECTION_DELAY);
     char const *error = nrf_strerror_get(err_code);
-    printf("%s\n", error);
+    printf("%s\n", error); // debugging purposes
     APP_ERROR_CHECK(err_code);
 
     //err_code = app_button_init(buttons2, 3, BUTTON_DETECTION_DELAY);
     //APP_ERROR_CHECK(err_code);
+}
+
+void uart_error_handle(app_uart_evt_t * p_event)
+{
+    if (p_event->evt_type == APP_UART_COMMUNICATION_ERROR)
+    {
+        APP_ERROR_HANDLER(p_event->data.error_communication);
+    }
+    else if (p_event->evt_type == APP_UART_FIFO_ERROR)
+    {
+        APP_ERROR_HANDLER(p_event->data.error_code);
+    }
 }
 
 
@@ -662,6 +703,11 @@ static void idle_state_handle(void)
     }
 }
 
+
+/*
+    This was going to be our original interrupt handler for the buttons, but then we decided to use the button event
+    handler from the example,
+*/
 /*void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     switch(pin)
@@ -669,15 +715,27 @@ static void idle_state_handle(void)
         case A_BUTTON:
             nrf_drv_gpiote_out_toggle(7);
             break;
+        case B_BUTTON:
+            nrf_drv_gpiote_out_toggle(22);
+            break;
+        case X_BUTTON:
+            nrf_drv_gpiote_out_toggle(21);
+            break;
+        case Y_BUTTON:
+            nrf_drv_gpiote_out_toggle(23);
+            break;
+        case PAUSE_BUTTON:
+            nrf_drv_gpiote_out_toggle(9);
+            break;
     }
 }*/
 
 /**
- * setup button pins as GPIO inputs
+ * setup button pins as GPIO inputs, one of our original setups, but it was better to initialize them as GPIOTE or buttons.
  * 
  */
 
-/*static void gpio_init(void)
+/*void gpio_init(void)
 {
     nrf_gpio_cfg_input(A_BUTTON, NRF_GPIO_PIN_NOPULL);
     nrf_gpio_cfg_input(B_BUTTON, NRF_GPIO_PIN_NOPULL);
@@ -725,8 +783,27 @@ int main(void)
     
 
     // Start execution.
-    NRF_LOG_INFO("Blinky example started.");
     advertising_start();
+    /*uint32_t err_code;
+
+    const app_uart_comm_params_t comm_params =
+      {
+          RX_PIN_NUMBER,
+          TX_PIN_NUMBER,
+          RTS_PIN_NUMBER,
+          CTS_PIN_NUMBER,
+          UART_HWFC,
+          false,
+          NRF_UART_BAUDRATE_115200
+      };
+
+    APP_UART_FIFO_INIT(&comm_params,
+                         UART_RX_BUF_SIZE,
+                         UART_TX_BUF_SIZE,
+                         uart_error_handle,
+                         APP_IRQ_PRIORITY_LOWEST,
+                         err_code);
+    APP_ERROR_CHECK(err_code);*/
 
     // Enter main loop.
     for (;;)
